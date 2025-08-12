@@ -171,7 +171,7 @@
 // ====================================
 // Null  => pakai tanggal asli
 // String => format "YYYY-MM-DD" untuk testing
-let testingDate = "2025-08-11"; // Contoh: "2025-08-15"
+let testingDate = null; // Contoh: "2025-08-15"
 
 // Jam + Tanggal realtime
 function updateJam() {
