@@ -29,11 +29,12 @@
     <!-- Tabel -->
     <div class="overflow-x-auto">
         <table class="min-w-full border border-gray-200 text-sm text-gray-700 rounded-lg overflow-hidden">
-            <thead class="bg-blue-600 text-white">
+            <thead class="bg-gray-800 text-white">
                 <tr>
                     <th class="px-4 py-3 text-left font-semibold">Nama</th>
                     <th class="px-4 py-3 text-left font-semibold">Kelas</th>
                     <th class="px-4 py-3 text-left font-semibold">Level</th>
+                    <th class="px-4 py-3 text-center font-semibold">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,16 +43,88 @@
                     <td class="px-4 py-3">{{ $s->nama }}</td>
                     <td class="px-4 py-3">{{ $s->kelas }}</td>
                     <td class="px-4 py-3">{{ $s->level }}</td>
+                    <td class="px-4 py-3 text-center flex justify-center gap-2">
+                        <!-- Tombol Edit -->
+                        <button 
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm"
+                            x-data
+                            @click="$dispatch('open-edit', {{ $s }})">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+
+                        <!-- Tombol Hapus -->
+                        <form action="{{ route('siswa.destroy', $s->id) }}" method="POST" 
+                            onsubmit="return confirm('Yakin mau hapus siswa ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                <i class="bi bi-trash"></i> Hapus
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="px-4 py-3 text-center text-gray-500 italic">
+                    <td colspan="4" class="px-4 py-3 text-center text-gray-500 italic">
                         Belum ada siswa
                     </td>
                 </tr>
                 @endforelse
             </tbody>
+
         </table>
+
+        <!-- Modal Edit -->
+<div x-data="{ open: false, siswa: {} }"
+     x-on:open-edit.window="open = true; siswa = $event.detail"
+     x-show="open"
+     style="display: none"
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+        <h2 class="text-lg font-bold mb-4">Edit Siswa</h2>
+        
+        <form :action="`/siswa/${siswa.id}`" method="POST">
+            @csrf
+            @method('PUT')
+            
+            <!-- Nama -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Nama</label>
+                <input type="text" name="nama" x-model="siswa.nama"
+                       class="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200">
+            </div>
+            
+            <!-- Kelas -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Kelas</label>
+                <input type="text" name="kelas" x-model="siswa.kelas"
+                       class="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200">
+            </div>
+            
+            <!-- Level -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Level</label>
+                <input type="text" name="level" x-model="siswa.level"
+                       class="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200">
+            </div>
+
+            <!-- Tombol -->
+            <div class="flex justify-end gap-3">
+                <button type="button" 
+                        @click="open = false" 
+                        class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                    Batal
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
     </div>
 
     <!-- Pagination -->

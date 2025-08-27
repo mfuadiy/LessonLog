@@ -36,6 +36,29 @@ class PembayaranController extends Controller
         return view('pembayaran.index', compact('data', 'search', 'tanggalMulai', 'tanggalSelesai'));
     }
 
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'tanggal'  => 'required|date',
+            'metode'   => 'required|string|in:Cash,Transfer',
+            'periode'  => 'required|string|max:20',
+        ]);
+
+        $pembayaran = Pembayaran::findOrFail($id);
+        $pembayaran->update($request->all());
+
+        return redirect()->route('pembayaran.index')->with('success', '✅ Data pembayaran berhasil diperbarui.');
+    }
+
+    public function destroy($id)
+    {
+        $pembayaran = Pembayaran::findOrFail($id);
+        $pembayaran->delete();
+
+        return redirect()->route('pembayaran.index')->with('success', '🗑️ Data pembayaran berhasil dihapus.');
+    }
+
+
 
     public function create()
     {

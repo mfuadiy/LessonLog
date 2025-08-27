@@ -208,5 +208,6 @@ setInterval(updateJam, 1000);
 updateJam();
 
 </script>
+<script src="//unpkg.com/alpinejs" defer></script>
 </body>
 </html>

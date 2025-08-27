@@ -23,6 +23,29 @@ class SiswaController extends Controller
         return view('siswa.index', compact('data', 'search'));
     }
 
+    public function update(Request $request, string $id)
+    {
+        $request->validate([
+            'nama'  => 'required|string|max:255',
+            'kelas' => 'required|string|max:50',
+            'level' => 'required|string|max:50',
+        ]);
+
+        $siswa = Siswa::findOrFail($id);
+        $siswa->update($request->all());
+
+        return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil diperbarui!');
+    }
+
+    public function destroy(string $id)
+    {
+        $siswa = Siswa::findOrFail($id);
+        $siswa->delete();
+
+        return redirect()->route('siswa.index')->with('success', 'Siswa berhasil dihapus!');
+    }
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -69,16 +92,4 @@ class SiswaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }
