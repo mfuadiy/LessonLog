@@ -31,6 +31,8 @@ Route::get('/absensi/pilih-jadwal', [AbsensiController::class, 'pilihJadwal'])->
 Route::get('/absensi/get-siswa/{jadwal}', [AbsensiController::class, 'getSiswa'])->name('absensi.getSiswa');
 Route::post('/absensi/store-ajax', [AbsensiController::class, 'storeAjax'])->name('absensi.storeAjax');
 Route::post('/absensi/reschedule', [AbsensiController::class, 'reschedule'])->name('absensi.reschedule');
+Route::delete('/absensi/{id}', [AbsensiController::class, 'destroy'])->name('absensi.destroy');
+
 
 // resource route untuk Pembayaran  
 Route::resource('pembayaran', PembayaranController::class);

@@ -12,16 +12,13 @@ class AbsensiController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $siswaId = $request->input('siswa_id'); // ✅ ambil siswa_id dari dropdown
         $tanggal = $request->input('tanggal');
         $status = $request->input('status');
 
         $data = Absensi::with('siswa')
-            ->when($search, function ($query, $search) {
-                return $query->whereHas('siswa', function ($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%")
-                        ->orWhere('kelas', 'like', "%{$search}%");
-                });
+            ->when($siswaId, function ($query, $siswaId) {
+                return $query->where('siswa_id', $siswaId);
             })
             ->when($tanggal, function ($query, $tanggal) {
                 return $query->whereDate('tanggal', $tanggal);
@@ -31,8 +28,21 @@ class AbsensiController extends Controller
             })
             ->paginate(10);
 
-        return view('absensi.index', compact('data', 'search', 'tanggal', 'status'));
+        $siswaList = Siswa::select('id', 'nama', 'kelas')->orderBy('nama')->get();
+
+        return view('absensi.index', compact('data', 'siswaId', 'tanggal', 'status', 'siswaList'));
     }
+
+    public function destroy($id)
+    {
+        $absensi = Absensi::findOrFail($id);
+        $absensi->delete();
+
+        return redirect()->route('absensi.index')
+            ->with('success', 'Data absensi berhasil dihapus.');
+    }
+
+
 
     public function show($id)
     {
