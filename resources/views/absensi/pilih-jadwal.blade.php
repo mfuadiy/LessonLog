@@ -8,6 +8,14 @@
 
     <!-- Pilih Jadwal -->
     <div class="mb-4">
+    <label for="tanggal" class="block text-sm font-medium text-gray-700 mb-1">
+        Pilih Tanggal
+    </label>
+    <input type="date" id="tanggal" name="tanggal" 
+           class="w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500">
+    </div>
+
+    <div class="mb-4">
         <label for="jadwal" class="block text-sm font-medium text-gray-700 mb-1">
             Pilih Jadwal Les
         </label>
@@ -18,6 +26,13 @@
                 <option value="{{ $j }}">{{ $j }}</option>
             @endforeach
         </select>
+    </div>
+
+    <div class="mb-6">
+    <a href="{{ url()->previous() }}" 
+       class="inline-block px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">
+        ← Kembali
+    </a>
     </div>
 
     <!-- Container Absensi -->
@@ -93,16 +108,32 @@
     const infoKoreksi = document.getElementById('info-koreksi');
     const modalReschedule = document.getElementById('modalReschedule');
 
-    document.getElementById('jadwal').addEventListener('change', function () {
-        let jadwal = this.value;
-        if (!jadwal) return;
+    // Event ketika ganti jadwal
+    document.getElementById('jadwal').addEventListener('change', loadSiswa);
+    document.getElementById('tanggal').addEventListener('change', loadSiswa);
 
-        fetch(`/absensi/get-siswa/${jadwal}`)
+    function loadSiswa() {
+        let jadwal = document.getElementById('jadwal').value;
+        let tanggal = document.getElementById('tanggal').value;
+
+        // Validasi wajib isi tanggal & jadwal
+        if (!jadwal) {
+            absenContainer.classList.add('hidden');
+            return;
+        }
+        
+        if (!tanggal) {
+            alert("⚠️ Harap pilih tanggal terlebih dahulu.");
+            return;
+        }
+
+        fetch(`/absensi/get-siswa/${jadwal}?tanggal=${tanggal}`)
             .then(res => res.json())
             .then(data => {
                 siswaData = data;
                 currentIndex = 0;
                 absensiHistory = {};
+
                 siswaData.forEach(s => {
                     if (s.absensi_status) {
                         absensiHistory[s.id] = {
@@ -118,11 +149,11 @@
                     updateProgress();
                     absenContainer.classList.remove('hidden');
                 } else {
-                    alert("Tidak ada siswa pada jadwal ini.");
+                    alert("❌ Tidak ada siswa pada jadwal dan tanggal ini.");
                     absenContainer.classList.add('hidden');
                 }
             });
-    });
+    }
 
     function tampilkanSiswa(index) {
         document.getElementById('nama-siswa').innerText = 
@@ -138,13 +169,15 @@
 
     function kirimAbsensi(status) {
         const siswa = siswaData[currentIndex];
+        const tanggal = document.getElementById('tanggal').value;
+
         fetch("{{ route('absensi.storeAjax') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
-            body: JSON.stringify({ siswa_id: siswa.id, status })
+            body: JSON.stringify({ siswa_id: siswa.id, status, tanggal })
         })
         .then(res => res.json())
         .then(res => {
@@ -157,17 +190,20 @@
 
     function koreksiAbsensi(status) {
         const siswa = siswaData[currentIndex];
+        const tanggal = document.getElementById('tanggal').value;
+
         if (status === 'Reschedule') {
             modalReschedule.classList.remove('hidden');
             return;
         }
+
         fetch("{{ route('absensi.storeAjax') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
-            body: JSON.stringify({ siswa_id: siswa.id, status, reschedule_date: null })
+            body: JSON.stringify({ siswa_id: siswa.id, status, tanggal, reschedule_date: null })
         })
         .then(res => res.json())
         .then(res => {
@@ -194,7 +230,7 @@
             tampilkanSiswa(currentIndex);
             updateProgress();
         } else {
-            alert("Ini siswa pertama.");
+            alert("⚠️ Ini siswa pertama.");
         }
     }
 
@@ -229,24 +265,31 @@
     }
 
     function submitReschedule() {
-        const date = document.getElementById('rescheduleDate').value;
+        const rescheduleDate = document.getElementById('rescheduleDate').value;
+        const tanggal = document.getElementById('tanggal').value;
         const siswa = siswaData[currentIndex];
-        if (!date) {
-            alert("Pilih tanggal terlebih dahulu!");
+
+        if (!tanggal) {
+            alert("⚠️ Harap pilih tanggal absensi terlebih dahulu.");
             return;
         }
+        if (!rescheduleDate) {
+            alert("⚠️ Harap pilih tanggal reschedule terlebih dahulu.");
+            return;
+        }
+
         fetch("{{ route('absensi.reschedule') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
-            body: JSON.stringify({ siswa_id: siswa.id, reschedule_date: date })
+            body: JSON.stringify({ siswa_id: siswa.id, tanggal, reschedule_date: rescheduleDate })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                absensiHistory[siswa.id] = { status: "Reschedule", id: data.data.id };
+                absensiHistory[siswa.id] = { status: "Reschedule", id: data.data.id, reschedule_date: rescheduleDate };
                 alert("✅ Reschedule berhasil disimpan untuk " + siswa.nama);
                 closeModal();
                 tampilkanSiswa(currentIndex);

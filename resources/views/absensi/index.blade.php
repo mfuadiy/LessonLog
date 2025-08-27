@@ -47,52 +47,75 @@
         </div>
     </form>
 
-    <!-- Tabel Absensi -->
-    <div class="overflow-x-auto">
-        <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-            <thead class="bg-gray-800 text-white">
-                <tr>
-                    <th class="px-4 py-2 text-left">Nama Siswa</th>
-                    <th class="px-4 py-2 text-left">Kelas</th>
-                    <th class="px-4 py-2 text-left">Tanggal</th>
-                    <th class="px-4 py-2 text-left">Pertemuan</th>
-                    <th class="px-4 py-2 text-left">Status</th>
-                    <th class="px-4 py-2 text-left">Reschedule</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($data as $absen)
-                <tr>
-                    <td class="px-4 py-2">{{ $absen->siswa->nama }}</td>
-                    <td class="px-4 py-2">{{ $absen->siswa->kelas }}</td>
-                    <td class="px-4 py-2">{{ \Carbon\Carbon::parse($absen->tanggal)->translatedFormat('d F Y') }}</td>
-                    <td class="px-4 py-2">{{ $absen->pertemuan }}</td>
-                    <td class="px-4 py-2">
-                        <span class="px-2 py-1 rounded-md text-sm font-medium
-                            @if($absen->status == 'Hadir') bg-green-100 text-green-700 
-                            @elseif($absen->status == 'Izin') bg-yellow-100 text-yellow-700 
-                            @elseif($absen->status == 'Sakit') bg-blue-100 text-blue-700 
-                            @elseif($absen->status == 'Reschedule') bg-gray-100 text-gray-700 
-                            @else bg-red-100 text-red-700 @endif">
-                            {{ $absen->status }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-2">
-                        {{ $absen->reschedule_date 
-                            ? \Carbon\Carbon::parse($absen->reschedule_date)->translatedFormat('d F Y') 
-                            : '-' }}
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-gray-500">
-                        Belum ada data absensi
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="overflow-x-auto hidden md:block">
+    <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-800 text-white">
+            <tr>
+                <th class="px-4 py-2 text-left">Nama Siswa</th>
+                <th class="px-4 py-2 text-left">Kelas</th>
+                <th class="px-4 py-2 text-left">Tanggal</th>
+                <th class="px-4 py-2 text-left">Pertemuan</th>
+                <th class="px-4 py-2 text-left">Status</th>
+                <th class="px-4 py-2 text-left">Reschedule</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @foreach($data as $absen)
+            <tr>
+                <td class="px-4 py-2">{{ $absen->siswa->nama }}</td>
+                <td class="px-4 py-2">{{ $absen->siswa->kelas }}</td>
+                <td class="px-4 py-2">{{ \Carbon\Carbon::parse($absen->tanggal)->translatedFormat('d F Y') }}</td>
+                <td class="px-4 py-2">{{ $absen->pertemuan }}</td>
+                <td class="px-4 py-2">
+                    <span class="px-2 py-1 rounded-md text-sm font-medium
+                        @if($absen->status == 'Hadir') bg-green-100 text-green-700 
+                        @elseif($absen->status == 'Izin') bg-yellow-100 text-yellow-700 
+                        @elseif($absen->status == 'Sakit') bg-blue-100 text-blue-700 
+                        @elseif($absen->status == 'Reschedule') bg-gray-100 text-gray-700 
+                        @else bg-red-100 text-red-700 @endif">
+                        {{ $absen->status }}
+                    </span>
+                </td>
+                <td class="px-4 py-2">
+                    {{ $absen->reschedule_date 
+                        ? \Carbon\Carbon::parse($absen->reschedule_date)->translatedFormat('d F Y') 
+                        : '-' }}
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+
+<!-- Tampilan HP -->
+<div class="grid gap-4 md:hidden">
+    @foreach($data as $absen)
+    <div class="border border-gray-200 rounded-lg p-4 shadow-sm bg-white">
+        <div class="font-bold text-gray-800">{{ $absen->siswa->nama }}</div>
+        <div class="text-sm text-gray-500">{{ $absen->siswa->kelas }}</div>
+        <div class="mt-2 text-sm">
+            Pertemuan: <span class="font-semibold">{{ $absen->pertemuan }}</span>
+        </div>
+        <div class="mt-1">
+            <span class="px-2 py-1 rounded-md text-sm font-medium
+                @if($absen->status == 'Hadir') bg-green-100 text-green-700 
+                @elseif($absen->status == 'Izin') bg-yellow-100 text-yellow-700 
+                @elseif($absen->status == 'Sakit') bg-blue-100 text-blue-700 
+                @elseif($absen->status == 'Reschedule') bg-gray-100 text-gray-700 
+                @else bg-red-100 text-red-700 @endif">
+                {{ $absen->status }}
+            </span>
+        </div>
+        <div class="mt-2 text-xs text-gray-500">
+            📅 {{ \Carbon\Carbon::parse($absen->tanggal)->translatedFormat('d F Y') }}
+            @if($absen->reschedule_date)
+                • 🔄 {{ \Carbon\Carbon::parse($absen->reschedule_date)->translatedFormat('d F Y') }}
+            @endif
+        </div>
     </div>
+    @endforeach
+</div>
+
 
     <!-- Pagination -->
     <div class="mt-6 flex justify-center">

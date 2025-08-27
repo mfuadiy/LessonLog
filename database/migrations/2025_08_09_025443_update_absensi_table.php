@@ -18,7 +18,7 @@ return new class extends Migration
             }
             // Kolom tanggal udah ada, jadi nggak usah ditambah lagi
             if (!Schema::hasColumn('absensi', 'status')) {
-                $table->enum('status', ['hadir', 'izin', 'sakit', 'alpa'])->after('tanggal');
+                $table->enum('status', ['Hadir', 'Izin', 'Sakit', 'Alpa', 'Reschedule'])->after('tanggal');
             }
             if (!Schema::hasColumn('absensi', 'pertemuan')) {
                 $table->integer('pertemuan')->nullable()->after('status');

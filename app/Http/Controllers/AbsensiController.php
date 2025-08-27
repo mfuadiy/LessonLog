@@ -65,24 +65,26 @@ class AbsensiController extends Controller
         return view('absensi.pilih-jadwal', compact('jadwal'));
     }
 
-    public function getSiswa($jadwal)
+    public function getSiswa(Request $request, $jadwal)
     {
-        $today = now()->toDateString();
+        // Ambil tanggal dari query param (?tanggal=YYYY-MM-DD)
+        // Kalau tidak ada, fallback ke hari ini
+        $tanggal = $request->query('tanggal', now()->toDateString());
 
         // Ambil siswa sesuai jadwal
         $siswaNormal = Siswa::where('jadwal_les', $jadwal)->get();
 
-        // Ambil absensi hari ini
-        $absensiToday = Absensi::whereDate('tanggal', $today)
+        // Ambil absensi sesuai tanggal
+        $absensiByTanggal = Absensi::whereDate('tanggal', $tanggal)
             ->with('siswa')
             ->get()
             ->keyBy('siswa_id');
 
-        // Gabungkan data dengan status absensi
-        $siswaGabungan = $siswaNormal->map(function ($s) use ($absensiToday) {
-            $s->absensi_status = $absensiToday[$s->id]->status ?? null;
-            $s->absensi_id = $absensiToday[$s->id]->id ?? null;
-            $s->reschedule_date = $absensiToday[$s->id]->reschedule_date ?? null;
+        // Gabungkan data siswa + status absensi
+        $siswaGabungan = $siswaNormal->map(function ($s) use ($absensiByTanggal) {
+            $s->absensi_status = $absensiByTanggal[$s->id]->status ?? null;
+            $s->absensi_id = $absensiByTanggal[$s->id]->id ?? null;
+            $s->reschedule_date = $absensiByTanggal[$s->id]->reschedule_date ?? null;
             return $s;
         });
 
@@ -90,8 +92,15 @@ class AbsensiController extends Controller
     }
 
 
+
     public function storeAjax(Request $request)
     {
+        $request->validate([
+            'siswa_id'   => 'required|exists:siswa,id',
+            'tanggal'    => 'required|date',
+            'status'     => 'required|in:Hadir,Izin,Sakit,Alpa,Reschedule',
+            'reschedule_date' => 'nullable|date'
+        ]);
         // Cari apakah ada record Reschedule yang belum dijalankan
         $reschedule = Absensi::where('siswa_id', $request->siswa_id)
             ->where('status', 'Reschedule')
@@ -119,7 +128,7 @@ class AbsensiController extends Controller
         $absensi = Absensi::updateOrCreate(
             [
                 'siswa_id' => $request->siswa_id,
-                'tanggal'  => Carbon::today()->format('Y-m-d'),
+                'tanggal'  => $request->tanggal,
             ],
             [
                 'status'     => $request->status,
@@ -147,7 +156,7 @@ class AbsensiController extends Controller
             $absensi = Absensi::updateOrCreate(
                 [
                     'siswa_id' => $request->siswa_id,
-                    'tanggal'  => \Carbon\Carbon::today()->format('Y-m-d'),
+                    'tanggal'  => $request->tanggal,
                 ],
                 [
                     'status'          => 'Reschedule',

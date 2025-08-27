@@ -73,13 +73,13 @@
                     </button>
                 </h4>
                 <nav class="space-y-1">
-                    <a href="{{ route('siswa.index') }}" 
-                       class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-700 transition {{ request()->is('siswa*') ? 'bg-blue-600' : '' }}">
-                        <i class="bi bi-people"></i> Data Siswa
-                    </a>
                     <a href="{{ route('absensi.index') }}" 
                        class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-700 transition {{ request()->is('absensi*') ? 'bg-blue-600' : '' }}">
                         <i class="bi bi-calendar-check"></i> Data Absensi
+                    </a>
+                    <a href="{{ route('siswa.index') }}" 
+                       class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-700 transition {{ request()->is('siswa*') ? 'bg-blue-600' : '' }}">
+                        <i class="bi bi-people"></i> Data Siswa
                     </a>
                     <a href="{{ route('pembayaran.index') }}" 
                     class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-700 transition {{ request()->is('pembayaran*') ? 'bg-blue-600' : '' }}">
@@ -171,7 +171,7 @@
 // ====================================
 // Null  => pakai tanggal asli
 // String => format "YYYY-MM-DD" untuk testing
-let testingDate = "2025-08-11"; // Contoh: "2025-08-15"
+let testingDate = null; // Contoh: "2025-08-15"
 
 // Jam + Tanggal realtime
 function updateJam() {
