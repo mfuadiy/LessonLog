@@ -61,20 +61,38 @@
     <!-- Table untuk desktop -->
     <div class="overflow-x-auto hidden md:block">
         @if(session('success'))
-        <div id="flash-message" class="mb-4 p-3 bg-red-100 text-red-800 rounded">
-            {{ session('success') }}
-        </div>
+            <div id="flash-message" class="mb-4 p-3 bg-red-100 text-red-800 rounded relative">
+                {{ session('success') }}
 
-        <script>
-            setTimeout(() => {
-            const flash = document.getElementById('flash-message');
-            if (flash) {
-                flash.style.transition = "opacity 0.5s ease";
-                flash.style.opacity = 0;
-                setTimeout(() => flash.remove(), 500); // hapus setelah animasi selesai
-            }
-            }, 5000); // 5000ms = 5 detik
-        </script>
+                <!-- Tombol Close -->
+                <button id="flash-close" 
+                        class="absolute top-2 right-2 text-red-800 hover:text-red-600 font-bold">
+                    &times;
+                </button>
+            </div>
+
+            <script>
+                const flash = document.getElementById('flash-message');
+                const closeBtn = document.getElementById('flash-close');
+
+                // Auto hide 5 detik
+                setTimeout(() => {
+                    if (flash) {
+                        flash.style.transition = "opacity 0.5s ease";
+                        flash.style.opacity = 0;
+                        setTimeout(() => flash.remove(), 500);
+                    }
+                }, 5000);
+
+                // Manual close
+                closeBtn.addEventListener('click', () => {
+                    if (flash) {
+                        flash.style.transition = "opacity 0.3s ease";
+                        flash.style.opacity = 0;
+                        setTimeout(() => flash.remove(), 300);
+                    }
+                });
+            </script>
         @endif
 
         <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
@@ -132,7 +150,43 @@
     </div>
 
     <!-- Tampilan Mobile -->
+    <!-- Tampilan Mobile -->
     <div class="grid gap-4 md:hidden">
+        @if(session('success'))
+            <div id="flash-message" class="mb-4 p-3 bg-red-100 text-red-800 rounded relative">
+                {{ session('success') }}
+
+                <!-- Tombol Close -->
+                <button id="flash-close" 
+                        class="absolute top-2 right-2 text-red-800 hover:text-red-600 font-bold">
+                    &times;
+                </button>
+            </div>
+
+            <script>
+                const flash = document.getElementById('flash-message');
+                const closeBtn = document.getElementById('flash-close');
+
+                // Auto hide 5 detik
+                setTimeout(() => {
+                    if (flash) {
+                        flash.style.transition = "opacity 0.5s ease";
+                        flash.style.opacity = 0;
+                        setTimeout(() => flash.remove(), 500);
+                    }
+                }, 5000);
+
+                // Manual close
+                closeBtn.addEventListener('click', () => {
+                    if (flash) {
+                        flash.style.transition = "opacity 0.3s ease";
+                        flash.style.opacity = 0;
+                        setTimeout(() => flash.remove(), 300);
+                    }
+                });
+            </script>
+        @endif
+
         @foreach($data as $absen)
         <div class="border border-gray-200 rounded-lg p-4 shadow-sm bg-white">
             <div class="font-bold text-gray-800">{{ $absen->siswa->nama }}</div>
@@ -156,27 +210,21 @@
                     • 🔄 {{ \Carbon\Carbon::parse($absen->reschedule_date)->translatedFormat('d F Y') }}
                 @endif
             </div>
+
+            <!-- Tombol Hapus -->
+            <div class="mt-3">
+                <form action="{{ route('absensi.destroy', $absen->id) }}" method="POST"
+                    onsubmit="return confirm('Yakin hapus absensi {{ $absen->siswa->nama }} tanggal {{ \Carbon\Carbon::parse($absen->tanggal)->translatedFormat('d F Y') }}?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" 
+                            class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md shadow transition">
+                        <i class="bi bi-trash"></i> Hapus
+                    </button>
+                </form>
+            </div>
         </div>
         @endforeach
-    </div>
-
-    <div class="grid gap-4 md:hidden">
-    @foreach($data as $absen)
-    <div class="border border-gray-200 rounded-lg p-4 shadow-sm bg-white">
-        <!-- ... konten kartu ... -->
-        <div class="mt-3">
-            <form action="{{ route('absensi.destroy', $absen->id) }}" method="POST"
-                    onsubmit="return confirm('Yakin hapus absensi {{ $absen->siswa->nama }} tanggal {{ \Carbon\Carbon::parse($absen->tanggal)->translatedFormat('d F Y') }}?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" 
-                        class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md shadow transition">
-                    <i class="bi bi-trash"></i> Hapus
-                </button>
-            </form>
-        </div>
-    </div>
-    @endforeach
     </div>
 
 
