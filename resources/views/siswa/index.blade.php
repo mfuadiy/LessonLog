@@ -34,6 +34,7 @@
                     <th class="px-4 py-3 text-left font-semibold">Nama</th>
                     <th class="px-4 py-3 text-left font-semibold">Kelas</th>
                     <th class="px-4 py-3 text-left font-semibold">Level</th>
+                    <th class="px-4 py-3 text-left font-semibold">Jadwal Les</th>
                     <th class="px-4 py-3 text-center font-semibold">Action</th>
                 </tr>
             </thead>
@@ -43,6 +44,7 @@
                     <td class="px-4 py-3">{{ $s->nama }}</td>
                     <td class="px-4 py-3">{{ $s->kelas }}</td>
                     <td class="px-4 py-3">{{ $s->level }}</td>
+                    <td class="px-4 py-3">{{ $s->jadwal_les }}</td>
                     <td class="px-4 py-3 text-center flex justify-center gap-2">
                         <!-- Tombol Edit -->
                         <button 
@@ -106,6 +108,13 @@
             <div class="mb-4">
                 <label class="block text-sm font-medium">Level</label>
                 <input type="text" name="level" x-model="siswa.level"
+                       class="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200">
+            </div>
+
+            <!-- Jadwal Les -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Jadwal Les</label>
+                <input type="text" name="jadwal_les" x-model="siswa.jadwal_les"
                        class="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200">
             </div>
 

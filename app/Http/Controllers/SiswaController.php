@@ -12,16 +12,18 @@ class SiswaController extends Controller
      */
     public function index(Request $request)
     {
-        //
         $search = $request->input('search');
 
         $data = \App\Models\Siswa::when($search, function ($query, $search) {
             return $query->where('nama', 'like', "%{$search}%")
                 ->orWhere('kelas', 'like', "%{$search}%");
-        })->paginate(10);
+        })
+            ->orderBy('nama', 'asc') // urutkan nama dari A-Z
+            ->paginate(10);
 
         return view('siswa.index', compact('data', 'search'));
     }
+
 
     public function update(Request $request, string $id)
     {
