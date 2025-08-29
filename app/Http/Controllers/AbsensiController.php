@@ -7,6 +7,8 @@ use App\Models\Siswa;
 use App\Models\Absensi;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AbsensiExport;
 
 class AbsensiController extends Controller
 {
@@ -69,10 +71,23 @@ class AbsensiController extends Controller
 
         return redirect()->route('absensi.index')->with('success', 'Absensi berhasil ditambahkan!');
     }
+
     public function pilihJadwal()
     {
         $jadwal = Siswa::select('jadwal_les')->distinct()->pluck('jadwal_les');
         return view('absensi.pilih-jadwal', compact('jadwal'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $start = $request->input('start');
+        $end   = $request->input('end');
+
+        if (!$start || !$end) {
+            return redirect()->back()->with('error', 'Tanggal harus diisi!');
+        }
+
+        return Excel::download(new AbsensiExport($start, $end), "Absensi_{$start}_sd_{$end}.xlsx");
     }
 
     public function getSiswa(Request $request, $jadwal)

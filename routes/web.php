@@ -32,6 +32,8 @@ Route::get('/absensi/get-siswa/{jadwal}', [AbsensiController::class, 'getSiswa']
 Route::post('/absensi/store-ajax', [AbsensiController::class, 'storeAjax'])->name('absensi.storeAjax');
 Route::post('/absensi/reschedule', [AbsensiController::class, 'reschedule'])->name('absensi.reschedule');
 Route::delete('/absensi/{id}', [AbsensiController::class, 'destroy'])->name('absensi.destroy');
+Route::get('/absensi/export-excel', [AbsensiController::class, 'exportExcel'])->name('absensi.exportExcel');
+
 
 
 // resource route untuk Pembayaran  

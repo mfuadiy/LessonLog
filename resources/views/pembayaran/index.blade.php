@@ -72,6 +72,7 @@
         <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
             <thead class="bg-gray-800 text-white">
     <tr>
+        <th class="px-4 py-3 text-left">No</th> 
         <th class="px-4 py-2 text-left">Nama Siswa</th>
         <th class="px-4 py-2 text-left">Tanggal</th>
         <th class="px-4 py-2 text-left">Periode</th>
@@ -82,6 +83,7 @@
 <tbody class="bg-white divide-y divide-gray-200">
     @forelse($data as $p)
     <tr>
+        <td class="px-4 py-2">{{ $loop->iteration + ($data->currentPage()-1) * $data->perPage() }}</td>
         <td class="px-4 py-2">{{ $p->siswa->nama }}</td>
         <td class="px-4 py-2">{{ \Carbon\Carbon::parse($p->tanggal)->translatedFormat('d F Y') }}</td>
         <td class="px-4 py-2">{{ $p->periode }}</td>

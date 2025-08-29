@@ -31,6 +31,7 @@
         <table class="min-w-full border border-gray-200 text-sm text-gray-700 rounded-lg overflow-hidden">
             <thead class="bg-gray-800 text-white">
                 <tr>
+                    <th class="px-4 py-3 text-left font-semibold">No</th> 
                     <th class="px-4 py-3 text-left font-semibold">Nama</th>
                     <th class="px-4 py-3 text-left font-semibold">Kelas</th>
                     <th class="px-4 py-3 text-left font-semibold">Level</th>
@@ -41,6 +42,7 @@
             <tbody>
                 @forelse($data as $s)
                 <tr class="hover:bg-gray-50 border-b border-gray-200">
+                    <td class="px-4 py-3">{{ $loop->iteration + ($data->currentPage()-1) * $data->perPage() }}</td>
                     <td class="px-4 py-3">{{ $s->nama }}</td>
                     <td class="px-4 py-3">{{ $s->kelas }}</td>
                     <td class="px-4 py-3">{{ $s->level }}</td>
