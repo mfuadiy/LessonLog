@@ -5,6 +5,7 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4 md:mb-0">Daftar Absensi</h3>
+        <div class="flex gap-2">
         <a href="{{ route('absensi.pilihJadwal') }}" 
            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow transition">
            <i class="bi bi-calendar-plus"></i> Tambah Absensi
@@ -14,6 +15,7 @@
             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow transition">
             <i class="bi bi-file-earmark-excel"></i> Export To Excel
         </button>
+        </div>
     </div>
 
     <!-- Filter -->

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
+use App\Exports\PembayaranExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PembayaranController extends Controller
 {
@@ -58,7 +60,17 @@ class PembayaranController extends Controller
         return redirect()->route('pembayaran.index')->with('success', '🗑️ Data pembayaran berhasil dihapus.');
     }
 
-
+    public function export(Request $request)
+    {
+        return Excel::download(
+            new PembayaranExport(
+                $request->search,
+                $request->tanggal_mulai,
+                $request->tanggal_selesai
+            ),
+            'laporan_pembayaran.xlsx'
+        );
+    }
 
     public function create()
     {

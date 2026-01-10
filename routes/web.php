@@ -33,6 +33,8 @@ Route::post('/absensi/store-ajax', [AbsensiController::class, 'storeAjax'])->nam
 Route::post('/absensi/reschedule', [AbsensiController::class, 'reschedule'])->name('absensi.reschedule');
 Route::delete('/absensi/{id}', [AbsensiController::class, 'destroy'])->name('absensi.destroy');
 Route::get('/absensi/export-excel', [AbsensiController::class, 'exportExcel'])->name('absensi.exportExcel');
+Route::get('/pembayaran/export', [PembayaranController::class, 'export'])->name('pembayaran.export');
+
 
 
 
