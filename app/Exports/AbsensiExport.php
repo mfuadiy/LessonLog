@@ -12,25 +12,24 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Conditional;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-
 class AbsensiExport implements FromCollection, WithEvents, ShouldAutoSize
 {
     protected $start;
     protected $end;
-    protected $struktur = [];
+    protected $strukturBulan = [];
 
     public function __construct($start, $end)
     {
         $this->start = Carbon::parse($start)->startOfDay();
         $this->end   = Carbon::parse($end)->endOfDay();
 
-        $this->buildStrukturPekan();
+        $this->buildStrukturBulan();
     }
 
     /**
-     * Bangun struktur bulan & pekan sesuai kalender
+     * Membangun daftar bulan & mencari jumlah maksimum pertemuan per bulan
      */
-    protected function buildStrukturPekan()
+    protected function buildStrukturBulan()
     {
         $periodeBulan = CarbonPeriod::create(
             $this->start->copy()->startOfMonth(),
@@ -39,11 +38,9 @@ class AbsensiExport implements FromCollection, WithEvents, ShouldAutoSize
         );
 
         foreach ($periodeBulan as $bulan) {
-
             $awalBulan = $bulan->copy()->startOfMonth();
             $akhirBulan = $bulan->copy()->endOfMonth();
 
-            // potong sesuai start–end
             if ($awalBulan < $this->start) {
                 $awalBulan = $this->start->copy();
             }
@@ -51,34 +48,30 @@ class AbsensiExport implements FromCollection, WithEvents, ShouldAutoSize
                 $akhirBulan = $this->end->copy();
             }
 
-            $cursor = $awalBulan->copy();
-            $pekanKe = 1;
+            // Hitung max pertemuan yang dimiliki oleh seorang siswa dalam bulan ini
+            $maxPertemuan = Absensi::whereBetween('tanggal', [
+                $awalBulan->toDateString(),
+                $akhirBulan->toDateString()
+            ])
+                ->selectRaw('siswa_id, COUNT(*) as total')
+                ->groupBy('siswa_id')
+                ->pluck('total')
+                ->max() ?? 0;
 
-            while ($cursor <= $akhirBulan) {
-
-                // akhir pekan = Sabtu ATAU akhir bulan
-                $akhirPekan = $cursor->copy()->endOfWeek(Carbon::SATURDAY);
-                if ($akhirPekan > $akhirBulan) {
-                    $akhirPekan = $akhirBulan->copy();
-                }
-
-                $this->struktur[] = [
-                    'bulan_key' => $bulan->format('Y-m'),
-                    'bulan_nama' => $bulan->translatedFormat('F Y'),
-                    'pekan_ke' => $pekanKe,
-                    'start' => $cursor->copy(),
-                    'end' => $akhirPekan->copy(),
-                ];
-
-                $cursor = $akhirPekan->addDay();
-                $pekanKe++;
-            }
+            $this->strukturBulan[] = [
+                'bulan_key'  => $bulan->format('Y-m'),
+                'bulan_nama' => $bulan->translatedFormat('F Y'),
+                'max_p'      => $maxPertemuan,
+                'start'      => $awalBulan,
+                'end'        => $akhirBulan,
+            ];
         }
     }
 
     public function collection()
     {
-        $absensi = Absensi::with('siswa')
+        // Ambil data absensi
+        $absensiRaw = Absensi::with('siswa')
             ->whereBetween('tanggal', [
                 $this->start->toDateString(),
                 $this->end->toDateString()
@@ -87,32 +80,43 @@ class AbsensiExport implements FromCollection, WithEvents, ShouldAutoSize
             ->orderBy('tanggal')
             ->get();
 
-        $data = [];
-
-        foreach ($absensi as $item) {
-
+        // Kelompokkan absensi berdasarkan siswa & bulan
+        $grouped = [];
+        foreach ($absensiRaw as $item) {
             $siswaId = $item->siswa_id;
             $nama = $item->siswa->nama ?? '-';
-            $tgl = Carbon::parse($item->tanggal);
+            $bulanKey = Carbon::parse($item->tanggal)->format('Y-m');
 
-            if (!isset($data[$siswaId])) {
-                $data[$siswaId] = ['Nama Siswa' => $nama];
-
-                // buat semua kolom pekan
-                foreach ($this->struktur as $i => $p) {
-                    $data[$siswaId]['col_' . $i] = '';
-                }
+            if (!isset($grouped[$siswaId])) {
+                $grouped[$siswaId] = [
+                    'nama' => $nama,
+                    'bulan' => []
+                ];
             }
 
-            foreach ($this->struktur as $i => $p) {
-                if ($tgl->between($p['start'], $p['end'])) {
-                    $data[$siswaId]['col_' . $i] = $tgl->toDateString();
-                    break;
-                }
-            }
+            $grouped[$siswaId]['bulan'][$bulanKey][] = Carbon::parse($item->tanggal)->toDateString();
         }
 
-        return collect(array_values($data));
+        // Susun baris data Excel sesuai struktur kolom bulan & pertemuan
+        $data = [];
+        foreach ($grouped as $siswaId => $siswaData) {
+            $row = ['Nama Siswa' => $siswaData['nama']];
+
+            foreach ($this->strukturBulan as $bIdx => $b) {
+                $bulanKey = $b['bulan_key'];
+                $absensiSiswaInBulan = $siswaData['bulan'][$bulanKey] ?? [];
+
+                // Isi tanggal pertemuan sebanyak max_p pada bulan variable
+                for ($p = 0; $p < $b['max_p']; $p++) {
+                    $key = 'col_' . $bIdx . '_' . $p;
+                    $row[$key] = $absensiSiswaInBulan[$p] ?? '';
+                }
+            }
+
+            $data[] = $row;
+        }
+
+        return collect($data);
     }
 
     public function registerEvents(): array
@@ -124,68 +128,50 @@ class AbsensiExport implements FromCollection, WithEvents, ShouldAutoSize
                 $sheet->setCellValue('A1', 'Nama Siswa');
                 $sheet->mergeCells('A1:A2');
 
-                $col = 2;
-                $bulanStartCol = $col;
-                $currentBulan = null;
+                $col = 2; // Mulai dari Kolom B (Index 2)
 
-                foreach ($this->struktur as $p) {
-
-                    if ($currentBulan !== $p['bulan_key']) {
-
-                        if ($currentBulan !== null) {
-                            $sheet->mergeCellsByColumnAndRow(
-                                $bulanStartCol,
-                                1,
-                                $col - 1,
-                                1
-                            );
-                        }
-
-                        $bulanStartCol = $col;
-                        $currentBulan = $p['bulan_key'];
-                        $sheet->setCellValueByColumnAndRow($col, 1, $p['bulan_nama']);
+                foreach ($this->strukturBulan as $b) {
+                    if ($b['max_p'] <= 0) {
+                        continue;
                     }
 
-                    $label = sprintf(
-                        'Pekan %d (%s–%s %s)',
-                        $p['pekan_ke'],
-                        $p['start']->format('d'),
-                        $p['end']->format('d'),
-                        $p['start']->translatedFormat('M')
-                    );
+                    $bulanStartCol = $col;
 
-                    $sheet->setCellValueByColumnAndRow($col, 2, $label);
-                    $col++;
+                    // Buat header sub-kolom (Pertemuan 1, Pertemuan 2, dst.)
+                    for ($p = 1; $p <= $b['max_p']; $p++) {
+                        $label = sprintf('Pertemuan ke-%d', $p);
+                        $sheet->setCellValueByColumnAndRow($col, 2, $label);
+                        $col++;
+                    }
+
+                    $bulanEndCol = $col - 1;
+
+                    // Merge Header Utama (Nama Bulan) di atas sub-kolom
+                    $sheet->setCellValueByColumnAndRow($bulanStartCol, 1, $b['bulan_nama']);
+                    $sheet->mergeCellsByColumnAndRow($bulanStartCol, 1, $bulanEndCol, 1);
                 }
 
-                // merge bulan terakhir
-                $sheet->mergeCellsByColumnAndRow(
-                    $bulanStartCol,
-                    1,
-                    $col - 1,
-                    1
-                );
-
-                // alignment
+                // Styling Alignment Header
                 $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '2')
                     ->getAlignment()
                     ->setHorizontal('center')
                     ->setVertical('center');
 
-                // ===== CONDITIONAL FORMATTING: MERAH JIKA TIDAK HADIR =====
+                // ===== CONDITIONAL FORMATTING: MERAH JIKA TIDAK HADIR / KOSONG =====
                 $highestRow = $sheet->getHighestRow();
                 $highestCol = $sheet->getHighestColumn();
 
-                // range absensi (mulai B3 karena A1:A2 header)
-                $range = 'B3:' . $highestCol . $highestRow;
+                if ($highestRow >= 3) {
+                    $range = 'B3:' . $highestCol . $highestRow;
 
-                $red = new Conditional();
-                $red->setConditionType(Conditional::CONDITION_CONTAINSBLANKS);
-                $red->getStyle()->getFill()
-                    ->setFillType(Fill::FILL_SOLID)
-                    ->getStartColor()->setARGB('FFC7CE'); // merah soft
+                    $red = new Conditional();
+                    $red->setConditionType(Conditional::CONDITION_CONTAINSBLANKS);
+                    $red->getStyle()->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB('FFC7CE'); // merah soft
 
-                $sheet->getStyle($range)->setConditionalStyles([$red]);
+                    $sheet->getStyle($range)->setConditionalStyles([$red]);
+                }
             }
         ];
     }
