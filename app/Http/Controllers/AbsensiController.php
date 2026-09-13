@@ -14,7 +14,7 @@ class AbsensiController extends Controller
 {
     public function index(Request $request)
     {
-        $siswaId = $request->input('siswa_id'); // ✅ ambil siswa_id dari dropdown
+        $siswaId = $request->input('siswa_id'); // ambil siswa_id dari dropdown
         $tanggal = $request->input('tanggal');
         $status = $request->input('status');
 
@@ -28,6 +28,7 @@ class AbsensiController extends Controller
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
+            ->latest('tanggal')
             ->paginate(10);
 
         $siswaList = Siswa::select('id', 'nama', 'kelas')->orderBy('nama')->get();
